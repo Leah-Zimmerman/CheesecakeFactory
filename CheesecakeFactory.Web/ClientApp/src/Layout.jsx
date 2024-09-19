@@ -27,7 +27,7 @@ function Layout({ children }) {
             </nav>
         </header>
         <div className="container">
-            <main role="main" className="pb-3">
+            <main role="main">
                 {children}
             </main>
         </div>

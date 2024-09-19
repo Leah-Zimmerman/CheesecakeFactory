@@ -1,5 +1,6 @@
 import { useState } from "react";
-
+import axios from "axios";
+import { Navigate, useNavigate } from "react-router-dom";
 
 
 const Orders = () => {
@@ -8,27 +9,55 @@ const Orders = () => {
     const [base, setBase] = useState('');
     const [toppings, setToppings] = useState('');
     const [specialRequest, setSpecialRequest] = useState('');
-    const [qty, setQty] = useState('1');
+    const [qty, setQty] = useState(1);
     const [date, setDate] = useState('');
-    const [total, setTotal] = useState('');
+    const [totalToppings,setTotalToppings] = useState(0);
+    const [total, setTotal] = useState(0);
+
+    const nav = useNavigate();
 
     const handleToppingChange = e => {
         const topping = e.target.name;
         const checked = e.target.checked;
         const prevToppings = toppings.split(', ').filter(Boolean);
 
+        let newTotalToppings = totalToppings;
+        let newTotal = total;
+
         if (checked) {
             const updatedToppings = [...prevToppings, topping].join(', ');
             setToppings(updatedToppings);
-            setTotal(total+1);
-            console.log(updatedToppings);
+            newTotalToppings +=1;
         }
         else {
             const updatedToppings = prevToppings.filter(t => t != topping).join(', ');
             setToppings(updatedToppings);
-            setTotal(total-1);
-            console.log(updatedToppings);
+            newTotalToppings -=1;
         }
+        newTotal = (50 + (newTotalToppings*4))*qty;
+        setTotal(newTotal);
+        setTotalToppings(newTotalToppings);
+    }
+
+    const onChangeBase = e =>{
+        setBase(e.target.value);
+        let newTotal = total;
+        newTotal = (50 + (totalToppings*4))*qty;
+        setTotal(newTotal);
+    }
+
+    const onQtyChange = e=>{
+        let newQty = e.target.value;
+        setQty(newQty);
+        let newTotal = total;
+        newTotal = (50 + (totalToppings*4))*newQty;
+        setTotal(newTotal);
+    }
+
+
+    const submitOrder=async()=>{
+        await axios.post('/api/cheesecake/addorder',{name,email,base,toppings,specialRequest,qty,date,total});
+        nav('/');
     }
 
     return <>
@@ -46,8 +75,8 @@ const Orders = () => {
                     <input type="text" className="form-control" name="email" value={email} onChange={e => setEmail(e.target.value)}></input>
                 </div>
                 <div className="mb-3">
-                    <label className="form-label">Cheesecake Base Flavor ($49.99)</label>
-                    <select className="form-select" onChange={e => setBase(e.target.value)} value={base}>
+                    <label className="form-label">Cheesecake Base Flavor ($50)</label>
+                    <select className="form-select" onChange={onChangeBase} value={base}>
                         <option value="Choose...">Choose...</option>
                         <option value="Classic">Classic</option>
                         <option value="Chocolate">Chocolate</option>
@@ -56,7 +85,7 @@ const Orders = () => {
                     </select>
                 </div>
                 <div className="mb-3">
-                    <label className="form-label">Toppings (each topping adds on an additional $3.95)</label>
+                    <label className="form-label">Toppings (each topping adds on an additional $4)</label>
                     <div className="form-check">
                         <input className="form-check-input" type="checkbox" name="Chocolate Chips" onChange={handleToppingChange}></input>
                         <label className="form-check-label">Chocolate Chips</label>
@@ -123,13 +152,13 @@ const Orders = () => {
                     </div>
                     <div className="mb-3">
                         <label className="form-label">Quantity</label>
-                        <input type="number" className="form-control" name="qty" value={qty} onChange={e => setQty(e.target.value)}></input>
+                        <input type="number" className="form-control" name="qty" value={qty} onChange={onQtyChange}></input>
                     </div>
                     <div className="mb-3">
                         <label className="form-label">Delivery Date</label>
                         <input type="date" className="form-control" name="date" value={date} onChange={e => setDate(e.target.value)}></input>
                     </div>
-                    <button className="btn btn-primary" disabled={!name || !email || !base || !qty || !date}>Submit Order</button>
+                    <button className="btn btn-primary" disabled={!name || !email || !base || !qty || !date} onClick={submitOrder}>Submit Order</button>
                 </div>
             </div>
             <div className="col-md-6 position-sticky" style={{ top: '2rem' }}>
@@ -143,7 +172,7 @@ const Orders = () => {
                         <p className="card-text">Special Requests: {specialRequest}</p>
                         <p className="card-text">Quantity: {qty}</p>
                         <p className="card-text">Delivery Date: {date}</p>
-                        <p className="card-text fw-bold">Total: ${((49.99+(3.95*total))*qty).toFixed(2)}</p>
+                        <p className="card-text fw-bold">Total: ${total}</p>
                     </div>
                 </div>
                 
